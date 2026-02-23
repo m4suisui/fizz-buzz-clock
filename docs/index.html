@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#111">
+  <meta name="description" content="A useless clock that displays time using FizzBuzz rules">
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+  <title>Fizz-Buzz Clock</title>
+  <style>
+    :root {
+      --color-text: #fff;
+      --color-shadow: rgba(0, 0, 0, 0.5);
+      --color-glass-bg: rgba(0, 0, 0, 0.25);
+      --color-glass-border: rgba(255, 255, 255, 0.12);
+      --font-clock: clamp(3rem, 10vw, 8rem);
+      --font-date: clamp(1.2rem, 3.5vw, 2.2rem);
+      --radius: clamp(0.8rem, 2vw, 1.5rem);
+    }
+
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Oswald", sans-serif;
+      height: 100dvh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding-bottom: 12vh;
+      background: #111;
+      background-size: cover;
+      background-position: center;
+      transition: background-image 0.8s ease-in-out;
+      overflow: hidden;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      display: block;
+      padding: clamp(0.8rem, 2.5vw, 2rem) clamp(1.2rem, 4vw, 3rem);
+    }
+
+    .date {
+      font-size: var(--font-date);
+      font-weight: 400;
+      color: var(--color-text);
+      text-shadow: 1px 1px 2px var(--color-shadow);
+      opacity: 0.8;
+      text-align: center;
+      margin-bottom: 0.2em;
+      line-height: 1.3;
+    }
+
+    .datePart {
+      display: inline;
+    }
+
+    .clock {
+      font-size: var(--font-clock);
+      font-weight: 700;
+      color: var(--color-text);
+      text-shadow: 2px 2px 6px var(--color-shadow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .timePart {
+      width: 3.5ch;
+      height: 2em;
+      text-align: center;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      line-height: 1;
+      will-change: opacity;
+    }
+
+    .digit {
+      display: inline-block;
+      width: 0.55em;
+      text-align: center;
+    }
+
+    .separator {
+      opacity: 0.6;
+      width: 0.5ch;
+      text-align: center;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body x-data="clockApp()" x-init="init()" @click="changeBackground()">
+  <time class="container" :datetime="iso">
+    <span class="sr-only" aria-live="polite" aria-atomic="true" x-text="a11y"></span>
+
+    <div class="date" aria-hidden="true" x-text="engDate"></div>
+
+    <div class="clock" aria-hidden="true">
+      <div class="timePart" x-html="fizzBuzz(hours)"></div>
+      <span class="separator">:</span>
+      <div class="timePart" x-html="fizzBuzz(minutes)"></div>
+      <span class="separator">:</span>
+      <div class="timePart" x-html="fizzBuzz(seconds)"></div>
+    </div>
+  </time>
+
+  <script>
+    function clockApp() {
+      return {
+        hours: 0, minutes: 0, seconds: 0,
+        year: 0, month: 0, day: 0, dayOfWeek: 0,
+        dowNames: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+        dowNamesFull: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+        monthNames: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+
+        fizzBuzzInline(num) {
+          if (num % 15 === 0) return 'FizzBuzz';
+          if (num % 3 === 0) return 'Fizz';
+          if (num % 5 === 0) return 'Buzz';
+          return null;
+        },
+
+        get engDate() {
+          const dow = this.fizzBuzzInline(this.dayOfWeek) ?? this.dowNamesFull[this.dayOfWeek];
+          const mon = this.fizzBuzzInline(this.month) ?? this.monthNames[this.month - 1];
+          const d = this.fizzBuzzInline(this.day) ?? String(this.day);
+          const y = this.fizzBuzzInline(this.year) ?? String(this.year);
+          return `${dow} ${mon} ${d}, ${y}`;
+        },
+
+        fizzBuzzDow() {
+          const n = this.dayOfWeek;
+          if (n % 15 === 0) return 'Fizz<br>Buzz';
+          if (n % 3 === 0) return 'Fizz';
+          if (n % 5 === 0) return 'Buzz';
+          return this.dowNames[n];
+        },
+
+        get iso() {
+          const p = (n, w = 2) => String(n).padStart(w, '0');
+          return `${this.year}-${p(this.month)}-${p(this.day)}T${p(this.hours)}:${p(this.minutes)}:${p(this.seconds)}`;
+        },
+
+        get a11y() {
+          const p = (n, w = 2) => String(n).padStart(w, '0');
+          return `${this.year}/${p(this.month)}/${p(this.day)} ${p(this.hours)}:${p(this.minutes)}:${p(this.seconds)}`;
+        },
+
+        fizzBuzz(num, pad = 2) {
+          if (num % 15 === 0) return 'Fizz<br>Buzz';
+          if (num % 3 === 0) return 'Fizz';
+          if (num % 5 === 0) return 'Buzz';
+          const digits = String(num).padStart(pad, '0')
+            .split('').map(d => `<span class="digit">${d}</span>`).join('');
+          return `<span>${digits}</span>`;
+        },
+
+        update() {
+          const now = new Date();
+          this.hours = now.getHours();
+          this.minutes = now.getMinutes();
+          this.seconds = now.getSeconds();
+          this.year = now.getFullYear();
+          this.month = now.getMonth() + 1;
+          this.day = now.getDate();
+          this.dayOfWeek = now.getDay();
+        },
+
+        tick() {
+          this.update();
+          setTimeout(() => this.tick(), 1000 - (Date.now() % 1000));
+        },
+
+        async fetchBackground() {
+          try {
+            const res = await fetch('https://picsum.photos/1920/1280');
+            if (res.ok) document.body.style.backgroundImage = `url(${res.url})`;
+          } catch { /* keep fallback */ }
+        },
+
+        changeBackground() { this.fetchBackground(); },
+
+        init() {
+          this.fetchBackground();
+          this.update();
+          setTimeout(() => this.tick(), 1000 - (Date.now() % 1000));
+        }
+      };
+    }
+  </script>
+</body>
+</html>
