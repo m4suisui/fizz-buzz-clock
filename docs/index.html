@@ -207,7 +207,15 @@
         async fetchBackground() {
           try {
             const res = await fetch('https://picsum.photos/1920/1280');
-            if (res.ok) document.body.style.backgroundImage = `url(${res.url})`;
+            if (!res.ok) return;
+            const url = res.url;
+            await new Promise((resolve, reject) => {
+              const img = new Image();
+              img.onload = resolve;
+              img.onerror = reject;
+              img.src = url;
+            });
+            document.body.style.backgroundImage = `url(${url})`;
           } catch { /* keep fallback */ }
         },
 
